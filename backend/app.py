@@ -1,22 +1,23 @@
 from flask import Flask, request, jsonify
-from database import setup_db, MySQL
 from decorators import time_check
-# from models
+
+#creates connection database
+from database import setup_db   #function for DB connections
 
 app = Flask(__name__)
 
-#creates app configuration for database
-setup_db(app)
 
-# Initializes the MySQL connection object with the Flask app.
-# This object will be used to interact with your MySQL database.
-mysql = MySQL(app)  #side note: have to configure mySQL config 'wait_timeout' as well
+@app.route('/')    #default path (route)
+def hello_world():
+    return 'hello world!'
+
 
 ### DB test endpoint
 @app.route('/db-test')  # Test database connection
 def test_db():
     try:
-        cur = mysql.connection.cursor()  # All SQL is done through cursor
+        connection = setup_db()
+        cur = connection.cursor()  # All SQL is done through cursor
 
         # See how many users there are
         cur.execute("SELECT COUNT(*) FROM Users")
@@ -28,9 +29,6 @@ def test_db():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/')    #default path (route)
-def hello_world():
-    return 'hello world!'
 
 if __name__ == '__main__':
     app.run(debug=True)
