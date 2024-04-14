@@ -3,6 +3,8 @@ import os
 import base64  #encode auth_string using base64
 from requests import post
 import json
+from haversine import haversine
+
 
 #business handle these queries
 import models
@@ -188,3 +190,24 @@ def service_delete_pin(user_id, pin_id):
         return {"error": "Authentication required or invalid pin ID"}
     
     return delete_pin(pin_id)
+
+
+
+
+### Check if user is around a pin
+### usage:
+# :param user_location: A tuple containing the user's latitude and longitude.
+# :return: A list of pins that the user is within the radius of.
+def check_user_within_pin_service(user_location):
+
+    pins = get_pins_by_profile(user_id)
+    user_within_pins = []
+    
+    for pin in pins:
+        pin_location = (pin['Latitude'], pin['Longitude'])
+        distance = haversine(user_location, pin_location, unit='m')  # distance in meters
+        
+        if distance <= pin['Radius']:
+            user_within_pins.append(pin)
+    
+    return user_within_pins
