@@ -1,6 +1,6 @@
 from database import setup_db
 
-# models will contain 
+# models will contain main CRUD functions
 # it will define all queries needed for this project
 
 #LIST OF ALL QUERY METHODS:
@@ -18,6 +18,17 @@ def get_all_users():
     cursor.close()
     connection.close()
     return users
+
+# fetches the Spotify access token for a given user ID from the database
+def get_user_spotify_token(user_id):
+    connection = setup_db()
+    cursor = connection.cursor(dictionary=True)
+    cursor.execute("SELECT Access_Token FROM Users WHERE SpotifyUserID = %s", (user_id))
+    result = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return result['Access_Token'] if result else None
+
 
 #add new user
 def add_new_user(SpotifyUserID, Access_Token):
@@ -62,6 +73,7 @@ def update_user_access_token(spotify_user_id, access_token):
 
 ### Scape Related Queries
 
+#fetch all profiles of a user
 def get_all_scapes_for_user(user_id):
     connection = setup_db()
     cursor = connection.cursor(dictionary=True)
@@ -112,7 +124,7 @@ def delete_scape(scape_id):
 
 
 
-### Pin related queries
+### Pin related queries      ## location is a string variable with name of place.
 
 # Load all pins for a specific profile (scape), allows us to load all pins available on map 
 # Returns a table of pins and their info
@@ -177,7 +189,7 @@ def update_pin(Pin_ID, ScapeID, Location, Latitude, Longitude, Radius, Priority,
 def delete_pin(Pin_ID):
     connection = setup_db()
     cursor = connection.cursor()
-    cursor.execute("DELETE FROM Pin WHERE Pin_ID = %s", (Pin_ID,))
+    cursor.execute("DELETE FROM Pin WHERE Pin_ID = %s", (Pin_ID))
     connection.commit()
     deleted_rows = cursor.rowcount
     cursor.close()
