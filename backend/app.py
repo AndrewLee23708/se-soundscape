@@ -1,34 +1,96 @@
-from flask import Flask, request, jsonify, url_for, redirect, session
+import requests
+from flask import Flask, request, jsonify, make_response, redirect, session
+from flask_cors import CORS
+import os
+from spotipy.oauth2 import SpotifyOAuth
+
 from decorators import time_check
 import service
-from database import setup_db   #function for DB connections
+from database import setup_db  # function for DB connections
 
 app = Flask(__name__)
+app.secret_key = os.getenv("APP_SECRET")
+CORS(app)
 
-# GET: Get data as response
-# POST: Create new record
-# PUT: Update a record
-# DELETE: Delete a record
-
-#Users first prompted with button, then once click, spotify will authenticate them
-#once we have access to spotify ID and Access token, we can route to features of app
-#Authenticates the login
-@app.route('/auth/spotify', methods=['GET'])          #i dont think the users see this, so you have an authPage endpoint so we can check for login detaisl
-def loginAuth():
-
-    #redirects them to spotify for login
-	token = get_token() #grab access token (for us developers)
-    
-    #We check for the following:
-    #if never logged in before, add into DB
+client_id = os.getenv("CLIENT_ID")
+client_secret = os.getenv("CLIENT_SECRET")
+sp_oauth = SpotifyOAuth(
+    client_id=client_id,
+    client_secret=client_secret,
+    redirect_uri="http://127.0.0.1:5000/callback",
+    scope="streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state"
+)
 
 
-    #if logged in before, pull up preexisting settings
+@app.route('/login', methods=["GET"])
+def login():
+    auth_url = sp_oauth.get_authorize_url()
+    return redirect(auth_url, code=302)
 
-	return token
+
+@app.route('/callback')
+def callback():
+    token_info = sp_oauth.get_access_token(request.args["code"])
+    resp = make_response(
+        redirect(f'http://localhost:3000/map?token={token_info["access_token"]}'))
+    return resp
 
 
+@app.route('/googlekey', methods=["GET"])
+def googlekey():
+    api_key = os.getenv("GOOGLE_API_KEY")
+    return jsonify({"google_api_key": api_key})
 
+
+@app.route('/playlists', methods=["POST"])
+def playlists():
+    data = request.get_json()
+    token = data.get('token')
+    url = f"https://api.spotify.com/v1/me/playlists?limit=50"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return jsonify(data)
+
+
+@app.route('/play', methods=["POST"])
+def play():
+    data = request.get_json()
+    token = data.get('token')
+    device_id = data.get('device_id')
+    uri = data.get('uri')
+    url = f"https://api.spotify.com/v1/me/player/play?device_id={device_id}"
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json'
+    }
+    data = {
+        "context_uri": uri
+    }
+    requests.put(url, headers=headers, json=data)
+    return jsonify({"message": f'playback {uri} started'})
+
+
+@app.route('/pause', methods=["POST"])
+def pause():
+    data = request.get_json()
+    token = data.get('token')
+    device_id = data.get('device_id')
+    url = f"https://api.spotify.com/v1/me/player/pause?device_id={device_id}"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    requests.put(url, headers=headers)
+    return jsonify({"message": "playback stopped"})
+
+
+@app.route('/pin', methods=["POST"])
+def pin():
+    # takes in pin object and stores it
+    data = request.get_json()
+    return jsonify({"pin created"})
 
 #users would have access to all profiles and shared profiles
 # **note: profile = scapes
