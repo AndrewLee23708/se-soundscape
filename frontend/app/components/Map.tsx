@@ -145,7 +145,7 @@ async function setOnMapClick(google: any, map: any) {
       }
       const pinString = JSON.stringify(pin)
       const id = generatePinId()
-      localStorage.setItem(id, pinString)
+      localStorage.setItem(id, pinString) // store via endpoint instead
 
       // create marker in google map
       const marker = new google.maps.Marker({
@@ -222,24 +222,50 @@ function radiusCheck(position: any) {
   return -1
 }
 
+// call fetchpin endpoint instead                                               
 /**
  * @description Fetches all pin objects from storage
  * @returns {pin[]} Returns array of pin objects
  */
 function fetchPins() {
-  let pins = []
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (key.startsWith('pin_')) {
-      const pinData = localStorage.getItem(key)
-      if (pinData) {
-        pins.push(JSON.parse(pinData))
-      }
+  const urlParams = new URLSearchParams(window.location.search);
+  const userId = urlParams.get('user_id');
+
+  return fetch(`http://localhost:5000/user/${userId}/pins`, {  // Correctly using userId in the endpoint
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json'
     }
-  }
-  return pins
+  })
+  .then(response => response.json())
+  .then(data => {
+    console.log('Pins:', data);
+    return data;
+  })
+  .catch(error => {
+    console.error('Error fetching pins:', error);
+  });
 }
 
+
+
+//   let pins = []
+//   for (let i = 0; i < localStorage.length; i++) {
+//     const key = localStorage.key(i)
+//     if (key.startsWith('pin_')) {
+//       const pinData = localStorage.getItem(key)
+//       if (pinData) {
+//         pins.push(JSON.parse(pinData))
+//       }
+//     }
+//   }
+//   return pins
+// }
+
+
+
+
+// template POST request
 /**
  * @description Starts playback context corresponding to given pin
  * @param {pin} pin - Pin object
@@ -263,6 +289,8 @@ async function playPin(pin: any) {
   const data = await response.json()
   console.log(data.message)
 }
+
+
 
 /**
  * @description Starts playback context corresponding to given pin
@@ -305,6 +333,7 @@ function setOnMarkerClick(google: any, map: any, pin: any, marker: any, circle: 
   })
 }
 
+// use modify pin endpoint instead
 /**
  * @description Returns info window for Google Map markers
  * @param {pin} pin - Pin object
@@ -334,6 +363,8 @@ function createInfoWindowContent(pin, marker, circle) {
     pin.radius = newRadius
     circle.setRadius(newRadius)
     const pinString = JSON.stringify(pin)
+
+    // modify to use modify pin endpoint
     localStorage.setItem(marker.id, pinString)
   })
   return div

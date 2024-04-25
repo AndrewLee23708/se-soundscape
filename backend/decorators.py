@@ -1,6 +1,22 @@
+from flask import session, jsonify
 import time
 
-### Functions are traeted like objects, 
+def check_authenticated(func):
+    def wrapper(*args, **kwargs):
+
+        # Extract user_id from session
+        session_user_id = session.get('user_id')
+        
+        # Extract user_id from the request's arguments (assuming it's passed as part of the route)
+        func_user_id = kwargs.get('user_id')
+        
+        if session_user_id and session_user_id == func_user_id:
+            return func(*args, **kwargs)
+        
+        else:
+            return jsonify({'error': 'Unauthorized access'}), 401
+    wrapper.__name__ = func.__name__
+    return wrapper
 
 #decorator to check time
 def time_check(func):
@@ -10,6 +26,10 @@ def time_check(func):
         t2 = time.time() - t1
         print(f'{func.__name__} ran in {t2} seconds')
     return wrapper
+
+
+
+### Functions are traeted like objects, 
 
 #decorator: check authentication
 # def check_authenticated(user):
