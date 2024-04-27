@@ -123,7 +123,7 @@ DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
 '''
 
 # route ‘save’, POST:
-# YOU WILL RECEIVE: (user_id, pin JSON object)
+# YOU WILL RECEIVE: JSON Object: (user_id, pin JSON object)
 # Pin JSON Object: {name, lat, lng, radius, uri)
 # YOU WILL DO: store pin in backend for the user_id and generate pin id
 # YOU WILL RETURN: return generated pin id
@@ -144,14 +144,18 @@ def save_pin():
 
 
 # Route ‘fetchpins’, POST
-# YOU WILL RECEIVE: (user_id)
+# YOU WILL RECEIVE: JSON Object: (user_id)
 # YOU WILL DO: retrieve pin objects for user_id from backend
 # YOU WILL RETURN: all of the user’s pin objects
 # Endpoint to fetch all pins for a user given their Spotify User ID.
 
 @app.route('/fetchpins', methods=['POST'])
 @check_authenticated
-def fetch_user_pins(user_id):
+def fetch_user_pins():
+
+    data = request.get_json()  # Get data from POST request
+    user_id = data.get('user_id')  # Extract user_id from data
+    
     pins = service.get_pins_for_user(user_id)
     
     if isinstance(pins, list):
@@ -162,7 +166,7 @@ def fetch_user_pins(user_id):
 
 
 # Route ‘modifypin’, POST
-# YOU WILL RECEIVE: (pin_id, updated pin JSON object, user_id)
+# YOU WILL RECEIVE: JSON Object: (pin_id, updated pin JSON object, user_id)
 # YOU WILL DO: Update corresponding pin in database
 # YOU WILL RETURN: nothing
 
@@ -182,7 +186,7 @@ def modify_pin():
 
 
 # Route ‘deletepin’, POST
-# YOU WILL RECEIVE: (pin_id, user_id)
+# YOU WILL RECEIVE: JSON Object: (pin_id, user_id)
 # YOU WILL DO: Delete corresponding pin in database
 # YOU WILL RETURN: nothing
 

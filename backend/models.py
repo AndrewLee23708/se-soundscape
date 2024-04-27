@@ -7,7 +7,7 @@ from database import setup_db
 
 #Check if user is in system
 #return true or false, so we can run next query if needed
-def check_user_exists(user_id):
+def check_user_exists_db(user_id):
     connection = setup_db()
     try:
         with connection.cursor() as cursor:
@@ -18,7 +18,7 @@ def check_user_exists(user_id):
 
 
 #Insert new user into db
-def insert_new_user(user_id):
+def insert_new_user_db(user_id):
     connection = setup_db()
     try:
         with connection.cursor() as cursor:
@@ -47,7 +47,7 @@ def fetch_user_pins_from_db(user_id):
     finally:
         connection.close()
 
-
+#update all pin in db
 def update_pin_in_db(user_id, pin_id, pin_data):
     connection = setup_db()
     try:
@@ -65,7 +65,7 @@ def update_pin_in_db(user_id, pin_id, pin_data):
     finally:
         connection.close()
 
-
+# delete pin from db
 def delete_pin_from_db(user_id, pin_id):
     connection = setup_db()
     try:
