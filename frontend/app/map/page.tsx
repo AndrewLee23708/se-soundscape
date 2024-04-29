@@ -6,9 +6,11 @@ import Player from '../components/Player'
 
 const Home: NextPage = () => {
   return (
-    <main>
-      <Map></Map>
-      <Player></Player>
+    <main className="mapContainer">
+      <Map />
+      <div className="playerOverlay center-bottom">
+        <Player />
+      </div>
     </main>
   )
 }

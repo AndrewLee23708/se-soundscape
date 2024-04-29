@@ -36,6 +36,19 @@ def callback():
     return resp
 
 
+@app.route('/user', methods=["POST"])
+def user():
+    data = request.get_json()
+    token = data.get('token')
+    url = "https://api.spotify.com/v1/me"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return jsonify(data)
+
+
 @app.route('/googlekey', methods=["GET"])
 def googlekey():
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -86,14 +99,33 @@ def pause():
     return jsonify({"message": "playback stopped"})
 
 
-@app.route('/pin', methods=["POST"])
-def pin():
-    # takes in pin object and stores it
+@app.route('/radiuscheck', methods=["POST"])
+def radiusCheck():
     data = request.get_json()
-    return jsonify({"pin created"})
+    user_id = data.get('user_id')
+    url = "http://127.0.0.1:5000/fetchpins"
+    headers = {
+        'Content-Type': 'application/json',
+    }
+    response = requests.post(url, headers=headers)
+    data = response.json()
+    
+@app.route('/playbackstate', methods=["POST"])
+def playbackState():
+    data = request.get_json()
+    token = data.get('token')
+    url = "https://api.spotify.com/v1/me/player"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    response = requests.post(url, headers=headers)
+    data = response.json()
+    return jsonify(data)
 
-#users would have access to all profiles and shared profiles
+# users would have access to all profiles and shared profiles
 # **note: profile = scapes
+
+
 @app.route('/profiles/<int:profile_id>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def profile_operations(profile_id):
 
@@ -114,7 +146,7 @@ def profile_operations(profile_id):
     else:
         return jsonify({"error": "Method not allowed"}), 405
 
-### implement shared feature later on
+# implement shared feature later on
 # @app.route('/profiles/<profileId>', methods=['POST'])
 # def share_profile(profileId):
 #     data = request.get_json()
@@ -122,31 +154,38 @@ def profile_operations(profile_id):
 
 # upon clicking a scape, we will load all the pins on the map
 
+
 @app.route('/scapes/<int:scape_id>/pins', methods=['GET'])
 def get_pins_for_scape(scape_id):
     # Retrieve and return all pins for the given scape
-    pins = get_pins_by_scape_service(scape_id)  # Service that handles the business logic for getting pins
+    # Service that handles the business logic for getting pins
+    pins = get_pins_by_scape_service(scape_id)
     return jsonify(pins), 200
 
 
-#pin operations
+# pin operations
 @app.route('/pins', methods=['POST'])
 def add_pin():
     data = request.get_json()
-    return add_pin_service(data), 201  # HTTP 201 Created for successful resource creation
+    # HTTP 201 Created for successful resource creation
+    return add_pin_service(data), 201
+
 
 @app.route('/pins/<int:pin_id>', methods=['DELETE'])
 def delete_pin(pin_id):
-    return delete_pin_service(pin_id), 204  # HTTP 204 No Content for successful deletion without response body
+    # HTTP 204 No Content for successful deletion without response body
+    return delete_pin_service(pin_id), 204
+
 
 @app.route('/pins/<int:pin_id>', methods=['PUT'])
 def edit_pin(pin_id):
     data = request.get_json()
-    return edit_pin_service(pin_id, data), 200  # HTTP 200 OK for successful update
+    # HTTP 200 OK for successful update
+    return edit_pin_service(pin_id, data), 200
 
 
-### place holder, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
-### Need information from Google maps API
+# place holder, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
+# Need information from Google maps API
 @app.route('/pins/check-location', methods=['POST'])
 def check_pin_location():
     data = request.get_json()
@@ -160,17 +199,8 @@ def check_pin_location():
         return jsonify({"error": "No pins nearby"}), 404
 
 
-
-
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-
-
-
-
 
 
 # ### DB test endpoint
@@ -191,8 +221,6 @@ if __name__ == '__main__':
 #         return jsonify({'error': str(e)}), 500
 
 
-
-
 # #dynamic routing <>, URLs pass parameter and get another website
 # #pass variable name
 # @app.route('/get-user/<user_id>')
@@ -202,7 +230,7 @@ if __name__ == '__main__':
 #         "name": "John Doe",
 #         "email": "john.doe@gmail.com"
 #      }
-    
+
 #     #query parameter, extra value included after main path
 #     extra = request.args.get("extra")
 #     if extra:

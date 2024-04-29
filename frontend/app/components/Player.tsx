@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 let url = 'https://sdk.scdn.co/spotify-player.js'
 
 export default function Player() {
+  const [isPlaying, setIsPlaying] = useState(false)
+
   useEffect(() => {
     async function init() {
       const token = loadToken()
@@ -16,10 +18,19 @@ export default function Player() {
   }, [])
 
   return (
-    <div>
-      <button id="toggle">Toggle</button>
-      <button id="skip">Skip</button>
-      <button id="previous">Previous</button>
+    <div className="button-container">
+      <button id="previous" className="spaced-button">
+        <img src="/prev.png" alt="Previous" />
+      </button>
+      <button id="toggle" className="spaced-button">
+        <img
+          src={isPlaying ? '/pause.png' : '/play.png'}
+          alt={isPlaying ? 'Pause' : 'Play'}
+        />
+      </button>
+      <button id="skip" className="spaced-button">
+        <img src="/skip.png" alt="Skip" />
+      </button>
     </div>
   )
 }
@@ -61,15 +72,37 @@ async function initPlayer(token: any) {
  * @description Initializes Spotify web playback
  * @param {string} token - Spotify access token
  * @param {player} player - Reference to Spotify Web Player instance
- * @description Connects Spotify Web Player instance. Upon successful connection, stores access token and corresponding device id for later use.
+ * @description Connects Spotify Web Player instance. Upon successful connection, stores access token and corresponding device id for later use. Also stores user id.
  * @returns {void} Returns nothing
  */
 async function initPlayback(token: any, player: any) {
+  await fetchUser(token)
   player.connect()
   player.addListener('ready', async ({ device_id }) => {
     localStorage.setItem('token', token)
     localStorage.setItem('device_id', device_id)
   })
+}
+
+/**
+ * @description Stores Spotify user id in local storage
+ * @param {string} token - Spotify access token
+ * @description Fetches Spotify user id and stores it in local storage
+ * @returns {void} Returns nothing
+ */
+async function fetchUser(token: any) {
+  const response = await fetch('http://127.0.0.1:5000/user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      token: token,
+    }),
+  })
+  const data = await response.json()
+  const user_id = data.display_name
+  localStorage.setItem('user_id', user_id)
 }
 
 /**

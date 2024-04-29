@@ -1,7 +1,7 @@
 "use client"
 
 export default function LoginButton() {
-  return (<button className="btn btn-lg btn-primary" onClick={() => login()}>Log In With Spotify</button>)
+  return (<button type="button" className="btn btn-lg btn-success login-btn" onClick={() => login()}>Log In With Spotify</button>)
 }
 
 const login = async () => {
