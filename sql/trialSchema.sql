@@ -13,6 +13,6 @@ CREATE TABLE Pin (
     -- Priority INT,
     PlaylistID INT,
     -- DateCreated DATETIME,
-    FOREIGN KEY (UserID) REFERENCES Users(SpotifyUserID),
+    FOREIGN KEY (UserID) REFERENCES Users(SpotifyUserID)
     -- FOREIGN KEY (PlaylistID) REFERENCES Playlist(Playlist_ID)
 );

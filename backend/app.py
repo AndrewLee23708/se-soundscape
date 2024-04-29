@@ -35,7 +35,6 @@ def login():
 # modified callback to save/check for user
 @app.route('/callback')
 def callback():
-    print('calling back')
     authorization_code = request.args["code"]
     auth_options = {
         'url': 'https://accounts.spotify.com/api/token',
@@ -157,14 +156,14 @@ DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
 
 
 @app.route('/createpin', methods=['POST'])
-@check_authenticated
+#@check_authenticated
 def save_pin():
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
     pin_data = data.get('pin')  # Extract pin data from request
-
     # Call a service function to save the pin and return the generated pin ID
     pin_id = service.save_pin_for_user(user_id, pin_data)
+    print(pin_id)
     if pin_id:
         return jsonify({"pin_id": pin_id}), 201  # Return the generated pin ID
     else:
@@ -198,7 +197,7 @@ def fetch_user_pins():
 # YOU WILL DO: Update corresponding pin in database
 # YOU WILL RETURN: nothing
 
-@app.route('/modifypin', methods=['POST'])
+@app.route('/editpin', methods=['POST'])
 @check_authenticated
 def modify_pin():
     data = request.get_json()

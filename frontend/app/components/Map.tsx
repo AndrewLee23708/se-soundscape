@@ -148,7 +148,6 @@ async function fetchPins() {
 }
 
 async function createPin(pin: any) {
-  /*
   const user_id = localStorage.getItem('user_id')
   const response = await fetch('http://127.0.0.1:5000/createpin', {
     method: 'POST',
@@ -157,25 +156,20 @@ async function createPin(pin: any) {
     },
     body: JSON.stringify({
       user_id: user_id,
-      name: pin.name,
-      lat: pin.lat,
-      lng: pin.lng,
-      radius: pin.radius,
-      uri: pin.uri,
+      pin: pin
     }),
   })
   const data = await response.json()
   const id = data.pin_id
-  return id*/
+  return id
 
   const pinString = JSON.stringify(pin)
-  const id = generatePinId()
+  //const id = generatePinId()
   localStorage.setItem(id, pinString)
   return id
 }
 
 async function editPin(pin_id: any, pin: any) {
-  /*
   const user_id = localStorage.getItem('user_id')
   const response = await fetch('http://127.0.0.1:5000/editpin', {
     method: 'POST',
@@ -185,13 +179,10 @@ async function editPin(pin_id: any, pin: any) {
     body: JSON.stringify({
       user_id: user_id,
       pin_id: pin_id,
-      name: pin.name,
-      lat: pin.lat,
-      lng: pin.lng,
-      radius: pin.radius,
-      uri: pin.uri,
+      pin: pin
     }),
-  })*/
+  })
+  return
   const pinString = JSON.stringify(pin)
   localStorage.setItem(pin_id, pinString)
 }
@@ -229,13 +220,7 @@ async function setOnMapClick(google: any, map: any) {
         radius: 2500,
         uri: 'spotify:album:5ht7ItJgpBH7W6vJ5BqpPr',
       }
-<<<<<<< HEAD
       const id = await createPin(pin)
-=======
-      const pinString = JSON.stringify(pin)
-      const id = generatePinId()
-      localStorage.setItem(id, pinString) // store via endpoint instead
->>>>>>> 5239e0b39523e80b3ac16d7d95cf60b52da6c0d6
 
       // create marker in google map
       const marker = new google.maps.Marker({
@@ -374,54 +359,7 @@ async function radiusCheck(position: any) {
   return -1
 }
 
-// call fetchpin endpoint instead                                               
-/**
-<<<<<<< HEAD
-=======
- * @description Fetches all pin objects from storage
- * @returns {pin[]} Returns array of pin objects
- */
-function fetchPins() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const userId = urlParams.get('user_id');
-
-  return fetch(`http://localhost:5000/user/${userId}/pins`, {  // Correctly using userId in the endpoint
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Pins:', data);
-    return data;
-  })
-  .catch(error => {
-    console.error('Error fetching pins:', error);
-  });
-}
-
-
-
-//   let pins = []
-//   for (let i = 0; i < localStorage.length; i++) {
-//     const key = localStorage.key(i)
-//     if (key.startsWith('pin_')) {
-//       const pinData = localStorage.getItem(key)
-//       if (pinData) {
-//         pins.push(JSON.parse(pinData))
-//       }
-//     }
-//   }
-//   return pins
-// }
-
-
-
-
-// template POST request
-/**
->>>>>>> 5239e0b39523e80b3ac16d7d95cf60b52da6c0d6
+/*
  * @description Starts playback context corresponding to given pin
  * @param {pin} pin - Pin object
  * @description Calls backend function to begin playback given the pin's playlist uri
@@ -470,65 +408,6 @@ async function stopPlayback() {
 }
 
 /**
-<<<<<<< HEAD
-=======
- * @description Starts playback context corresponding to given pin
- * @param {google} google - Reference to Google Maps API script
- * @param {map} map - Reference to Google Map
- * @param {pin} pin - Pin object
- * @param {marker} marker - Reference to Google Maps API marker
- * @param {circle} circle - Google Maps circle object
- * @description This function sets the marker to have a pop up window which pops up when clicked
- * @returns {void} Returns nothing
- */
-function setOnMarkerClick(google: any, map: any, pin: any, marker: any, circle: any) {
-  marker.addListener('click', () => {
-    const infoWindow = new google.maps.InfoWindow({
-      content: createInfoWindowContent(pin, marker, circle),
-    })
-    infoWindow.open(map, marker)
-  })
-}
-
-// use modify pin endpoint instead
-/**
- * @description Returns info window for Google Map markers
- * @param {pin} pin - Pin object
- * @param {marker} marker - Reference to Google Maps API marker
- * @param {circle} circle - Google Maps circle object
- * @description Creates a custom HTML edit pop up window for markers. Upon clicking save button, pin in storage will be updated to reflect the changes.
- * @returns {div} Returns HTML div element
- */
-function createInfoWindowContent(pin, marker, circle) {
-  const div = document.createElement('div')
-  div.innerHTML = `
-      <label>Name:</label>
-      <input id="name" type="text" value="${pin.name}" /><br>
-      <label>URI:</label>
-      <input id="uri" type="text" value="${pin.uri}" /><br>
-      <label>Radius:</label>
-      <input id="radius" type="text" value="${pin.radius}" /><br>
-      <button id="save">Save</button>
-    `
-  const button = div.querySelector('#save')
-  button.addEventListener('click', function () {
-    const newName = div.querySelector('#name').value
-    pin.name = newName
-    const newUri = div.querySelector('#uri').value
-    pin.uri = newUri
-    const newRadius = parseFloat(div.querySelector('#radius').value);
-    pin.radius = newRadius
-    circle.setRadius(newRadius)
-    const pinString = JSON.stringify(pin)
-
-    // modify to use modify pin endpoint
-    localStorage.setItem(marker.id, pinString)
-  })
-  return div
-}
-
-/**
->>>>>>> 5239e0b39523e80b3ac16d7d95cf60b52da6c0d6
  * @description Returns random Pin ID for keeping track of pins
  * @param {int} length - Length of random string
  * @returns {string} Returns pin ID
