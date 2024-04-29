@@ -162,8 +162,9 @@ def save_pin():
     user_id = data.get('user_id')  # Extract user_id from data
     pin_data = data.get('pin')  # Extract pin data from request
 
-    pin_id = service.save_pin_for_user(user_id, pin_data)
+    pin_id = service.add_pin_for_user(user_id, pin_data)
     print(pin_id)
+    
     if pin_id:
         return jsonify({"pin_id": pin_id}), 201  #return pin ID
     else:
@@ -177,7 +178,7 @@ def save_pin():
 # Endpoint to fetch all pins for a user given their Spotify User ID.
 
 @app.route('/fetchpins', methods=['POST'])
-@check_authenticated
+#@check_authenticated
 def fetch_user_pins():
 
     data = request.get_json()  # Get data from POST request
@@ -197,8 +198,9 @@ def fetch_user_pins():
 # YOU WILL RETURN: nothing
 
 @app.route('/editpin', methods=['POST'])
-@check_authenticated
+#@check_authenticated
 def modify_pin():
+    print('editing pin in backend')
     data = request.get_json()
     pin_id = data.get('pin_id')
     user_id = data.get('user_id')
@@ -217,7 +219,7 @@ def modify_pin():
 # YOU WILL RETURN: nothing
 
 @app.route('/deletepin', methods=['POST'])
-@check_authenticated
+#@check_authenticated
 def delete_pin():
     data = request.get_json()
     pin_id = data.get('pin_id')

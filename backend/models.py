@@ -56,10 +56,10 @@ def add_pin_in_db(user_id, pin_data):
     try:
         with connection.cursor() as cursor:
             sql = """
-            INSERT INTO Pin (user_id, name, latitude, longitude, radius, uri, date_created)
-            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+            INSERT INTO Pin (user_id, name, latitude, longitude, radius, uri)
+            VALUES (%s, %s, %s, %s, %s, %s)
             """
-            cursor.execute(sql, (user_id, pin_data['name'], pin_data['latitude'], pin_data['longitude'], pin_data['radius'], pin_data['uri']))
+            cursor.execute(sql, (user_id, pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri']))
             connection.commit()
             return cursor.lastrowid  #return id of pin
         
@@ -82,13 +82,21 @@ def update_pin_in_db(user_id, pin_id, pin_data):
             """
             cursor.execute(sql, (pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri'], pin_id, user_id))
             connection.commit()
-
+            print("executed query")
+            print(user_id)
+            print(pin_data['lat'])
+            print(pin_data['lng'])
+            print(pin_data['radius'])
+            print(pin_data['name'])
+            print(pin_data['uri'])
             return cursor.rowcount > 0  # Returns True if there are rows updated
+            
     except Exception as e:
         print(f"Error updating pin: {e}")
         return False
     finally:
         connection.close()
+
 
 # delete pin from db
 def delete_pin_from_db(user_id, pin_id):
@@ -179,9 +187,7 @@ def delete_pin_from_db(user_id, pin_id):
 
 # #update user
 # def update_user_access_token(spotify_user_id, access_token):
-#     """
-#     Updates an existing user's access token and returns the number of affected rows.
-#     """
+
 #     connection = setup_db()
 #     cursor = connection.cursor()
 #     cursor.execute("""

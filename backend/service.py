@@ -45,11 +45,10 @@ def get_pins_for_user(user_id):
 
 ###  add a new pin for user
 def add_pin_for_user(user_id, pin_data):
-
-    #make sure values exist
-    if not all([
-        user_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
-        return {"error": "Missing required pin data", "success": False}
+    # Make sure values exist
+    required_fields = ['name', 'lat', 'lng', 'radius', 'uri']
+    if not all(pin_data.get(field) for field in required_fields):
+        return {"error": "Missing required pin data"}
 
     try:
         latitude = float(pin_data['lat'])
@@ -57,32 +56,39 @@ def add_pin_for_user(user_id, pin_data):
         radius = float(pin_data['radius'])
 
         if not (-90 <= latitude <= 90):
-            return {"error": "Latitude out of range", "success": False}
+            return {"error": "Latitude out of range"}
         if not (-180 <= longitude <= 180):
-            return {"error": "Longitude out of range", "success": False}
+            return {"error": "Longitude out of range"}
         if radius < 0:
-            return {"error": "Radius must be non-negative", "success": False}
+            return {"error": "Radius must be non-negative"}
         
     except ValueError:
-        return {"error": "Latitude, longitude, and radius must be valid numbers", "success": False}
-
-    #run model query
+        return {"error": "Latitude, longitude, and radius must be valid numbers"}
+    
+    # Run model query
     pin_id = models.add_pin_in_db(user_id, pin_data)
+    print(pin_id)
 
-    if pin_id:
-        return {"message": "Pin added successfully", "pin_id": pin_id, "success": True}
-    else:
+    if not pin_id:
         return {"error": "Failed to add pin", "success": False}
 
 
 
 ### update pins for users
 def update_pin(user_id, pin_id, pin_data):
+    print(user_id)
+    print(pin_data['lat'])
+    print(pin_data['lng'])
+    print(pin_data['radius'])
+    print(pin_data['name'])
+    print(pin_data['uri'])
 
+    '''
     # Data validation could go here
     if not all([user_id, pin_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
         return {"error": "Invalid data provided", "success": False}
-
+    '''
+    
     try:
         if not (-90 <= float(pin_data['lat']) <= 90) or not (-180 <= float(pin_data['lng']) <= 180):
             return {"error": "Latitude or longitude out of range", "success": False}
@@ -91,6 +97,7 @@ def update_pin(user_id, pin_id, pin_data):
     except ValueError:
         return {"error": "Latitude, longitude, and radius must be valid numbers", "success": False}
 
+    print('going to models')
     # Update the pin in the database
     if models.update_pin_in_db(user_id, pin_id, pin_data):
         return {"message": "Pin updated successfully", "success": True}

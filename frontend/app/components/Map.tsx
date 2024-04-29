@@ -162,14 +162,11 @@ async function createPin(pin: any) {
   const data = await response.json()
   const id = data.pin_id
   return id
-
-  const pinString = JSON.stringify(pin)
-  //const id = generatePinId()
-  localStorage.setItem(id, pinString)
-  return id
 }
 
 async function editPin(pin_id: any, pin: any) {
+  console.log('editing pin')
+  console.log(pin)
   const user_id = localStorage.getItem('user_id')
   const response = await fetch('http://127.0.0.1:5000/editpin', {
     method: 'POST',
@@ -182,6 +179,8 @@ async function editPin(pin_id: any, pin: any) {
       pin: pin
     }),
   })
+  const data = response.json()
+  console.log(data)
   return
   const pinString = JSON.stringify(pin)
   localStorage.setItem(pin_id, pinString)

@@ -5,14 +5,13 @@ CREATE TABLE Users (
 
 CREATE TABLE Pin (
     Pin_ID INT AUTO_INCREMENT PRIMARY KEY,
-    UserID VARCHAR(255),
-    Location TEXT,
+    User_ID VARCHAR(255),
+    Name TEXT,
     Latitude DOUBLE,
     Longitude DOUBLE,
-    Radius DOUBLE,
     -- Priority INT,
-    PlaylistID INT,
+    Radius DOUBLE,
     -- DateCreated DATETIME,
+    URI VARCHAR(255),  
     FOREIGN KEY (UserID) REFERENCES Users(SpotifyUserID)
-    -- FOREIGN KEY (PlaylistID) REFERENCES Playlist(Playlist_ID)
 );

@@ -41,6 +41,7 @@ export default function Player() {
  */
 function loadToken() {
   const urlParams = new URLSearchParams(window.location.search)
+  localStorage.setItem('user_id', urlParams.get('user_id'))
   return urlParams.get('token')
 }
 
@@ -76,33 +77,11 @@ async function initPlayer(token: any) {
  * @returns {void} Returns nothing
  */
 async function initPlayback(token: any, player: any) {
-  await fetchUser(token)
   player.connect()
   player.addListener('ready', async ({ device_id }) => {
     localStorage.setItem('token', token)
     localStorage.setItem('device_id', device_id)
   })
-}
-
-/**
- * @description Stores Spotify user id in local storage
- * @param {string} token - Spotify access token
- * @description Fetches Spotify user id and stores it in local storage
- * @returns {void} Returns nothing
- */
-async function fetchUser(token: any) {
-  const response = await fetch('http://127.0.0.1:5000/user', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      token: token,
-    }),
-  })
-  const data = await response.json()
-  const user_id = data.display_name
-  localStorage.setItem('user_id', user_id)
 }
 
 /**
