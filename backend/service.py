@@ -15,8 +15,7 @@ from database import setup_db
 ############
 
 
-### check/validate if user in db, if not, save to user to db.
-
+### check/validate if user in db, if not, save to user to db
 def save_user(user_id):
     if not user_id:
         return {"error": "Invalid user ID provided", "success": False}
@@ -32,7 +31,6 @@ def save_user(user_id):
         return {"error": "Failed to add user", "success": False}
 
 
-
 ### save pin for user
 def get_pins_for_user(user_id):
     if not user_id:
@@ -43,26 +41,39 @@ def get_pins_for_user(user_id):
         return {"pins": pins, "success": True}
     else:
         return {"error": "Failed to fetch pins", "success": False}
+    
 
+###  add a new pin for user
+def add_pin_for_user(user_id, pin_data):
 
+    #make sure values exist
+    if not all([
+        user_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
+        return {"error": "Missing required pin data", "success": False}
 
-### get all pins for user
-def get_pins_for_user(user_id):
-    connection = setup_db()
     try:
-        with connection.cursor(dictionary=True) as cursor:
-            sql = """
-            SELECT * FROM Pin WHERE user_id = %s
-            """
-            cursor.execute(sql, (user_id,))
-            pins = cursor.fetchall()
+        latitude = float(pin_data['lat'])
+        longitude = float(pin_data['lng'])
+        radius = float(pin_data['radius'])
 
-            return pins  # Return a list of pin dictionaries
-    except Exception as e:
-        print(f"Error fetching pins: {e}")
-        return None
-    finally:
-        connection.close()
+        if not (-90 <= latitude <= 90):
+            return {"error": "Latitude out of range", "success": False}
+        if not (-180 <= longitude <= 180):
+            return {"error": "Longitude out of range", "success": False}
+        if radius < 0:
+            return {"error": "Radius must be non-negative", "success": False}
+        
+    except ValueError:
+        return {"error": "Latitude, longitude, and radius must be valid numbers", "success": False}
+
+    #run model query
+    pin_id = models.add_pin_in_db(user_id, pin_data)
+
+    if pin_id:
+        return {"message": "Pin added successfully", "pin_id": pin_id, "success": True}
+    else:
+        return {"error": "Failed to add pin", "success": False}
+
 
 
 ### update pins for users
@@ -80,8 +91,6 @@ def update_pin(user_id, pin_id, pin_data):
     except ValueError:
         return {"error": "Latitude, longitude, and radius must be valid numbers", "success": False}
 
-    #implement additional checks here, so check if user has the rights to delete the pin
-
     # Update the pin in the database
     if models.update_pin_in_db(user_id, pin_id, pin_data):
         return {"message": "Pin updated successfully", "success": True}
@@ -95,8 +104,6 @@ def delete_pin(user_id, pin_id):
     if not user_id or not pin_id:
         return {"error": "Missing user ID or pin ID", "success": False}
     
-    #implement additional checks here, so check if user has the rights to delete the pin
-
     if models.delete_pin_from_db(user_id, pin_id):
         return {"message": "Pin deleted successfully", "success": True}
     else:

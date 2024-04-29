@@ -161,11 +161,11 @@ def save_pin():
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
     pin_data = data.get('pin')  # Extract pin data from request
-    # Call a service function to save the pin and return the generated pin ID
+
     pin_id = service.save_pin_for_user(user_id, pin_data)
     print(pin_id)
     if pin_id:
-        return jsonify({"pin_id": pin_id}), 201  # Return the generated pin ID
+        return jsonify({"pin_id": pin_id}), 201  #return pin ID
     else:
         return jsonify({"error": "Failed to save pin"}), 500
 
@@ -186,9 +186,8 @@ def fetch_user_pins():
     pins = service.get_pins_for_user(user_id)
 
     if isinstance(pins, list):
-        return jsonify(pins), 200  # Correct use of jsonify to send data
+        return jsonify(pins), 200
     else:
-        # Appropriate error handling
         return jsonify({"error": "Failed to fetch pins"}), 500
 
 
@@ -237,6 +236,7 @@ def delete_pin():
 '''
 
 SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
+For future implementation
 
 
 '''

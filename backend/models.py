@@ -41,13 +41,37 @@ def fetch_user_pins_from_db(user_id):
             """
             cursor.execute(sql, (user_id,))
             return cursor.fetchall()  # Return a list of pin dictionaries
+        
     except Exception as e:
         print(f"Error fetching pins: {e}")
         return None
     finally:
         connection.close()
 
+#add a pin in db
+#returns ID of created pin
+def add_pin_in_db(user_id, pin_data):
+    connection = setup_db()
+
+    try:
+        with connection.cursor() as cursor:
+            sql = """
+            INSERT INTO Pin (user_id, name, latitude, longitude, radius, uri, date_created)
+            VALUES (%s, %s, %s, %s, %s, %s, NOW())
+            """
+            cursor.execute(sql, (user_id, pin_data['name'], pin_data['latitude'], pin_data['longitude'], pin_data['radius'], pin_data['uri']))
+            connection.commit()
+            return cursor.lastrowid  #return id of pin
+        
+    except Exception as e:
+        print(f"Error adding pin: {e}")
+        return None 
+    finally:
+        connection.close()
+
+
 #update all pin in db
+#returns true if updated
 def update_pin_in_db(user_id, pin_id, pin_data):
     connection = setup_db()
     try:
@@ -58,7 +82,8 @@ def update_pin_in_db(user_id, pin_id, pin_data):
             """
             cursor.execute(sql, (pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri'], pin_id, user_id))
             connection.commit()
-            return cursor.rowcount > 0  # Return True if any rows were updated
+
+            return cursor.rowcount > 0  # Returns True if there are rows updated
     except Exception as e:
         print(f"Error updating pin: {e}")
         return False
