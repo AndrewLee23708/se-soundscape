@@ -2,6 +2,7 @@ import requests
 from flask import Flask, request, jsonify, make_response, redirect, session
 from flask_cors import CORS
 import os
+import base64
 from spotipy.oauth2 import SpotifyOAuth
 
 from decorators import time_check, check_authenticated
@@ -28,35 +29,48 @@ def login():
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url, code=302)
 
+# make it return user_id info from profile by fetching user_id from user_info
 
-# @app.route('/callback')
-# def callback():
-#     token_info = sp_oauth.get_access_token(request.args["code"])
-#     resp = make_response(
-#         redirect(f'http://localhost:3000/map?token={token_info["access_token"]}'))
-#     return resp
 
-#make it return user_id info from profile by fetching user_id from user_info
-
-#modified callback to save/check for user
+# modified callback to save/check for user
 @app.route('/callback')
 def callback():
-    token_info = sp_oauth.get_access_token(request.args["code"])
-    headers = {'Authorization': f'Bearer {token_info["access_token"]}'}
-    response = requests.get('https://api.spotify.com/v1/me', headers=headers)
-    user_info = response.json()
-    user_id = user_info['id']  # Can we double check-> Assuming the response contains the user ID
-
+    print('calling back')
+    authorization_code = request.args["code"]
+    auth_options = {
+        'url': 'https://accounts.spotify.com/api/token',
+        'form': {
+            'code': authorization_code,
+            'redirect_uri': 'http://127.0.0.1:5000/callback',
+            'grant_type': 'authorization_code'
+        },
+        'headers': {
+            'content-type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Basic ' + base64.b64encode((client_id + ':' + client_secret).encode('utf-8')).decode('utf-8')
+        }
+    }
+    # Send the POST request to exchange the authorization code for an access token
+    response = requests.post(
+        auth_options['url'], data=auth_options['form'], headers=auth_options['headers'])
+    data = response.json()
+    access_token =  data['access_token']
+    # fetch username
+    url = "https://api.spotify.com/v1/me"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    user_id = data['id']
    # Save the user ID to the database
-    if service.save_user(user_id): 
-        session['user_id'] = user_id    ### save this session in the backend
+    if service.save_user(user_id):
+        session['user_id'] = user_id  # save this session in the backend
         print("User login/saved successfully")
-
     else:
         print("Failed to save user")
-
-    # Redirect with the token and user_id for client-side use
-    return redirect(f'http://localhost:3000/map?token={token_info["access_token"]}&user_id={user_id}')     #make sure access_token is in URL
+    resp = make_response(
+        redirect(f'http://localhost:3000/map?token={access_token}&user_id={user_id}'))
+    return resp
 
 
 @app.route('/user', methods=["POST"])
@@ -141,7 +155,8 @@ DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
 # YOU WILL DO: store pin in backend for the user_id and generate pin id
 # YOU WILL RETURN: return generated pin id
 
-@app.route('/save', methods=['POST'])
+
+@app.route('/createpin', methods=['POST'])
 @check_authenticated
 def save_pin():
     data = request.get_json()  # Get data from POST request
@@ -168,14 +183,14 @@ def fetch_user_pins():
 
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
-    
+
     pins = service.get_pins_for_user(user_id)
-    
+
     if isinstance(pins, list):
         return jsonify(pins), 200  # Correct use of jsonify to send data
     else:
-        return jsonify({"error": "Failed to fetch pins"}), 500  # Appropriate error handling
-
+        # Appropriate error handling
+        return jsonify({"error": "Failed to fetch pins"}), 500
 
 
 # Route ‘modifypin’, POST
@@ -220,9 +235,6 @@ def delete_pin():
         return jsonify({"error": "Failed to delete pin"}), 500
 
 
-
-
-
 '''
 
 SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
@@ -231,7 +243,7 @@ SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
 '''
 
 
-#users would have access to all profiles and shared profiles
+# users would have access to all profiles and shared profiles
 # **note: profile are users, scapes are different maps they have
 # ***note: front end can declare which endpoint method you want to call
 # all operations to first menu where users can select their profiles
@@ -267,11 +279,11 @@ SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
 
 # ##### pin operations
 
-# # take in pin id, 
+# # take in pin id,
 # @app.route('/pins', methods=['POST', 'GET'])
 # def get_pin():
 #     data = request.get_json()
-#     id = data.get("id") 
+#     id = data.get("id")
 #     pin = data.get("pin")
 
 #     service.service_get_pin_details(id)
@@ -296,7 +308,6 @@ SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
 #     app.run(debug=True)
 
 
-
 # ### place holder, this is already implemented in front end, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
 # ### Need information from Google maps API
 # @app.route('/pins/check-location', methods=['POST'])
@@ -319,14 +330,6 @@ SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
 #     return add_profile_service(profileId, data)
 
 # upon clicking a scape, we will load all the pins on the map
-
-
-
-
-
-
-
-
 
 
 # ### DB test endpoint
