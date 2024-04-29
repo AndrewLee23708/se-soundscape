@@ -76,18 +76,10 @@ def add_pin_for_user(user_id, pin_data):
 
 ### update pins for users
 def update_pin(user_id, pin_id, pin_data):
-    print(user_id)
-    print(pin_data['lat'])
-    print(pin_data['lng'])
-    print(pin_data['radius'])
-    print(pin_data['name'])
-    print(pin_data['uri'])
 
-    '''
     # Data validation could go here
     if not all([user_id, pin_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
         return {"error": "Invalid data provided", "success": False}
-    '''
     
     try:
         if not (-90 <= float(pin_data['lat']) <= 90) or not (-180 <= float(pin_data['lng']) <= 180):
@@ -102,6 +94,7 @@ def update_pin(user_id, pin_id, pin_data):
     if models.update_pin_in_db(user_id, pin_id, pin_data):
         return {"message": "Pin updated successfully", "success": True}
     else:
+    
         return {"error": "Failed to update pin", "success": False}
 
 
