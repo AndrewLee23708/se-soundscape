@@ -4,12 +4,13 @@ from flask_cors import CORS
 import os
 from spotipy.oauth2 import SpotifyOAuth
 
-from decorators import time_check
+from decorators import time_check, check_authenticated
 import service
 from database import setup_db  # function for DB connections
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET")
+
 CORS(app)
 
 client_id = os.getenv("CLIENT_ID")
@@ -28,12 +29,34 @@ def login():
     return redirect(auth_url, code=302)
 
 
+# @app.route('/callback')
+# def callback():
+#     token_info = sp_oauth.get_access_token(request.args["code"])
+#     resp = make_response(
+#         redirect(f'http://localhost:3000/map?token={token_info["access_token"]}'))
+#     return resp
+
+#make it return user_id info from profile by fetching user_id from user_info
+
+#modified callback to save/check for user
 @app.route('/callback')
 def callback():
     token_info = sp_oauth.get_access_token(request.args["code"])
-    resp = make_response(
-        redirect(f'http://localhost:3000/map?token={token_info["access_token"]}'))
-    return resp
+    headers = {'Authorization': f'Bearer {token_info["access_token"]}'}
+    response = requests.get('https://api.spotify.com/v1/me', headers=headers)
+    user_info = response.json()
+    user_id = user_info['id']  # Can we double check-> Assuming the response contains the user ID
+
+   # Save the user ID to the database
+    if service.save_user(user_id): 
+        session['user_id'] = user_id    ### save this session in the backend
+        print("User login/saved successfully")
+
+    else:
+        print("Failed to save user")
+
+    # Redirect with the token and user_id for client-side use
+    return redirect(f'http://localhost:3000/map?token={token_info["access_token"]}&user_id={user_id}')     #make sure access_token is in URL
 
 
 @app.route('/user', methods=["POST"])
@@ -98,53 +121,196 @@ def pause():
     requests.put(url, headers=headers)
     return jsonify({"message": "playback stopped"})
 
+##########################
 
-@app.route('/radiuscheck', methods=["POST"])
-def radiusCheck():
-    data = request.get_json()
-    user_id = data.get('user_id')
-    url = "http://127.0.0.1:5000/fetchpins"
-    headers = {
-        'Content-Type': 'application/json',
-    }
-    response = requests.post(url, headers=headers)
-    data = response.json()
-    
-@app.route('/playbackstate', methods=["POST"])
-def playbackState():
-    data = request.get_json()
-    token = data.get('token')
-    url = "https://api.spotify.com/v1/me/player"
-    headers = {
-        'Authorization': f'Bearer {token}',
-    }
-    response = requests.post(url, headers=headers)
-    data = response.json()
-    return jsonify(data)
+# Pin related Endpoints #
 
-# users would have access to all profiles and shared profiles
-# **note: profile = scapes
+##########################
 
 
-@app.route('/profiles/<int:profile_id>', methods=['GET', 'PUT', 'POST', 'DELETE'])
-def profile_operations(profile_id):
+'''
 
-    # Update the profile with the provided ID
-    if request.method == 'GET':
-        scape_details = service_get_all_scapes_for_user(profile_id)
-        return jsonify(scape_details), 200
+DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
 
-    elif request.method == 'POST':
-        # Create a new profile
-        data = request.get_json()
-        return jsonify(service_add_new_scape(profile_id, data)), 201
 
-    elif request.method == 'DELETE':
-        # Delete the profile with the provided ID
-        return jsonify(service_delete_scape_service(profile_id)), 204
+'''
 
+# route ‘save’, POST:
+# YOU WILL RECEIVE: JSON Object: (user_id, pin JSON object)
+# Pin JSON Object: {name, lat, lng, radius, uri)
+# YOU WILL DO: store pin in backend for the user_id and generate pin id
+# YOU WILL RETURN: return generated pin id
+
+@app.route('/save', methods=['POST'])
+@check_authenticated
+def save_pin():
+    data = request.get_json()  # Get data from POST request
+    user_id = data.get('user_id')  # Extract user_id from data
+    pin_data = data.get('pin')  # Extract pin data from request
+
+    # Call a service function to save the pin and return the generated pin ID
+    pin_id = service.save_pin_for_user(user_id, pin_data)
+    if pin_id:
+        return jsonify({"pin_id": pin_id}), 201  # Return the generated pin ID
     else:
-        return jsonify({"error": "Method not allowed"}), 405
+        return jsonify({"error": "Failed to save pin"}), 500
+
+
+# Route ‘fetchpins’, POST
+# YOU WILL RECEIVE: JSON Object: (user_id)
+# YOU WILL DO: retrieve pin objects for user_id from backend
+# YOU WILL RETURN: all of the user’s pin objects
+# Endpoint to fetch all pins for a user given their Spotify User ID.
+
+@app.route('/fetchpins', methods=['POST'])
+@check_authenticated
+def fetch_user_pins():
+
+    data = request.get_json()  # Get data from POST request
+    user_id = data.get('user_id')  # Extract user_id from data
+    
+    pins = service.get_pins_for_user(user_id)
+    
+    if isinstance(pins, list):
+        return jsonify(pins), 200  # Correct use of jsonify to send data
+    else:
+        return jsonify({"error": "Failed to fetch pins"}), 500  # Appropriate error handling
+
+
+
+# Route ‘modifypin’, POST
+# YOU WILL RECEIVE: JSON Object: (pin_id, updated pin JSON object, user_id)
+# YOU WILL DO: Update corresponding pin in database
+# YOU WILL RETURN: nothing
+
+@app.route('/modifypin', methods=['POST'])
+@check_authenticated
+def modify_pin():
+    data = request.get_json()
+    pin_id = data.get('pin_id')
+    user_id = data.get('user_id')
+    updated_pin = data.get('pin')
+
+    success = service.update_pin(user_id, pin_id, updated_pin)
+    if success:
+        return jsonify({"message": "Pin updated successfully"}), 200
+    else:
+        return jsonify({"error": "Failed to update pin"}), 500
+
+
+# Route ‘deletepin’, POST
+# YOU WILL RECEIVE: JSON Object: (pin_id, user_id)
+# YOU WILL DO: Delete corresponding pin in database
+# YOU WILL RETURN: nothing
+
+@app.route('/deletepin', methods=['POST'])
+@check_authenticated
+def delete_pin():
+    data = request.get_json()
+    pin_id = data.get('pin_id')
+    user_id = data.get('user_id')
+
+    if not pin_id or not user_id:
+        return jsonify({"error": "Missing data"}), 400
+
+    success = service.delete_pin(user_id, pin_id)
+    if success:
+        return jsonify({"message": "Pin deleted successfully"}), 200
+    else:
+        return jsonify({"error": "Failed to delete pin"}), 500
+
+
+
+
+
+'''
+
+SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
+
+
+'''
+
+
+#users would have access to all profiles and shared profiles
+# **note: profile are users, scapes are different maps they have
+# ***note: front end can declare which endpoint method you want to call
+# all operations to first menu where users can select their profiles
+
+# @app.route('/scapes/<int:profile_id>', methods=['GET', 'POST', 'DELETE'])
+# def scape_operations(profile_id):
+
+#     # Update the profile with the provided ID
+#     if request.method == 'GET':
+#         scape_details = service.service_get_all_scapes_for_user(profile_id)
+#         return jsonify(scape_details), 200
+
+#     elif request.method == 'POST':
+#         # Create a new profile
+#         data = request.get_json()
+#         return jsonify(service.service_add_new_scape(profile_id, data)), 201
+
+#     elif request.method == 'DELETE':
+#         # Delete the profile with the provided ID
+#         return jsonify(service.service_delete_scape_service(profile_id)), 204
+
+#     else:
+#         return jsonify({"error": "Method not allowed"}), 405
+
+
+# # Once user selects a scape, we return all available scapes
+# @app.route('/scapes/<int:scape_id>/pins', methods=['GET'])
+# def get_pins_for_scape(scape_id):
+#     # Retrieve and return all pins for the given scape
+#     pins = service.get_pins_by_scape_service(scape_id)  # Service that handles the business logic for getting pins
+#     return jsonify(pins), 200
+
+
+# ##### pin operations
+
+# # take in pin id, 
+# @app.route('/pins', methods=['POST', 'GET'])
+# def get_pin():
+#     data = request.get_json()
+#     id = data.get("id") 
+#     pin = data.get("pin")
+
+#     service.service_get_pin_details(id)
+
+#     return jsonify()
+
+# @app.route('/pins', methods=['POST'])
+# def add_pin():
+#     data = request.get_json()
+#     return service.service_add_pin(data), 201  # HTTP 201 Created for successful resource creation
+
+# @app.route('/pins/<int:pin_id>', methods=['DELETE'])
+# def delete_pin(pin_id):
+#     return service.service_delete_pin(pin_id), 204  # HTTP 204 No Content for successful deletion without response body
+
+# @app.route('/pins/<int:pin_id>', methods=['PUT'])
+# def edit_pin(pin_id):
+#     data = request.get_json()
+#     return service.service_update_pin(pin_id, data), 200  # HTTP 200 OK for successful update
+
+# if __name__ == '__main__':
+#     app.run(debug=True)
+
+
+
+# ### place holder, this is already implemented in front end, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
+# ### Need information from Google maps API
+# @app.route('/pins/check-location', methods=['POST'])
+# def check_pin_location():
+#     data = request.get_json()
+#     user_location = data.get('location')
+
+#     # Assuming 'check_user_within_pin' is a service that returns pin data if the user is within a pin's location
+#     pin_info = check_user_within_pin_service(user_location)
+#     if pin_info:
+#         return jsonify(pin_info), 200
+#     else:
+#         return jsonify({"error": "No pins nearby"}), 404
+
 
 # implement shared feature later on
 # @app.route('/profiles/<profileId>', methods=['POST'])
@@ -155,52 +321,12 @@ def profile_operations(profile_id):
 # upon clicking a scape, we will load all the pins on the map
 
 
-@app.route('/scapes/<int:scape_id>/pins', methods=['GET'])
-def get_pins_for_scape(scape_id):
-    # Retrieve and return all pins for the given scape
-    # Service that handles the business logic for getting pins
-    pins = get_pins_by_scape_service(scape_id)
-    return jsonify(pins), 200
 
 
-# pin operations
-@app.route('/pins', methods=['POST'])
-def add_pin():
-    data = request.get_json()
-    # HTTP 201 Created for successful resource creation
-    return add_pin_service(data), 201
 
 
-@app.route('/pins/<int:pin_id>', methods=['DELETE'])
-def delete_pin(pin_id):
-    # HTTP 204 No Content for successful deletion without response body
-    return delete_pin_service(pin_id), 204
 
 
-@app.route('/pins/<int:pin_id>', methods=['PUT'])
-def edit_pin(pin_id):
-    data = request.get_json()
-    # HTTP 200 OK for successful update
-    return edit_pin_service(pin_id, data), 200
-
-
-# place holder, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
-# Need information from Google maps API
-@app.route('/pins/check-location', methods=['POST'])
-def check_pin_location():
-    data = request.get_json()
-    user_location = data.get('location')
-
-    # Assuming 'check_user_within_pin' is a service that returns pin data if the user is within a pin's location
-    pin_info = check_user_within_pin_service(user_location)
-    if pin_info:
-        return jsonify(pin_info), 200
-    else:
-        return jsonify({"error": "No pins nearby"}), 404
-
-
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
 # ### DB test endpoint

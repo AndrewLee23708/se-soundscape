@@ -11,7 +11,29 @@ def setup_db():
 
 
 
-### Below is test of db connection
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Below is test of db connection, quick tutorial:
 #
 # Let's do a quick test to see if database is connecting
 

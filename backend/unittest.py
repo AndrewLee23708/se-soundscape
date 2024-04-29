@@ -2,9 +2,8 @@ import pytest
 from service import update_pin_service
 
 #run through our business layer which catches errors and sends it to the model layer.
-#valid input
 
-# Valid inputs for a successful update
+# valid inputs for a successful update
 def get_valid_inputs():
     return {
         "pin_id": 1,  # create for test in DB
