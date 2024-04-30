@@ -181,16 +181,11 @@ def save_pin():
 @app.route('/fetchpins', methods=['POST'])
 #@check_authenticated
 def fetch_user_pins():
-
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
 
     pins = service.get_pins_for_user(user_id)
-
-    if isinstance(pins, list):
-        return jsonify(pins), 200
-    else:
-        return jsonify({"error": "Failed to fetch pins"}), 500
+    return jsonify(pins), 200
 
 
 # Route ‘modifypin’, POST

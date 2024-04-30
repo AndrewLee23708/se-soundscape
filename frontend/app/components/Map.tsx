@@ -14,9 +14,23 @@ export default function Map() {
       const map = initMap(google, 'map')
       setGeolocation(google, map)
       setOnMapClick(google, map)
+      const pins = await fetchPins()
+      for (const raw_pin of pins) {
+        const pin = {
+          name: raw_pin['Name'],
+          lat: raw_pin['Latitude'],
+          lng: raw_pin['Longitude'],
+          radius: raw_pin['Radius'],
+          uri: raw_pin['URI'],
+          id: raw_pin['Pin_ID'],
+        }
+        await createMapElements(map, pin)
+      }
+      // debug
       debug()
       await getPlaylists()
     }
+
     init()
   }, [])
 
@@ -156,7 +170,7 @@ async function createPin(pin: any) {
     },
     body: JSON.stringify({
       user_id: user_id,
-      pin: pin
+      pin: pin,
     }),
   })
   const data = await response.json()
@@ -178,14 +192,12 @@ async function editPin(pin_id: any, pin: any) {
     body: JSON.stringify({
       user_id: user_id,
       pin_id: pin_id,
-      pin: pin
+      pin: pin,
     }),
   })
   const data = response.json()
   console.log(data)
   return
-  const pinString = JSON.stringify(pin)
-  localStorage.setItem(pin_id, pinString)
 }
 
 async function deletePin(pin_id: any) {
@@ -220,40 +232,47 @@ async function setOnMapClick(google: any, map: any) {
         lng: position.lng(),
         radius: 2500,
         uri: 'spotify:album:5ht7ItJgpBH7W6vJ5BqpPr',
+        id: -1,
       }
       const id = await createPin(pin)
-      console.log(`just create pin id is ${id}`)
-      // create marker in google map
-      const marker = new google.maps.Marker({
-        map: map,
-        position: position,
-        title: pin.name,
-        icon: {
-          url: '/pin.png',
-          scaledSize: new google.maps.Size(50, 50),
-        },
-      })
-      marker.id = id
-
-      // create radius indicator in google map
-      const circle = new google.maps.Circle({
-        map: map,
-        radius: pin.radius,
-        fillColor: '#21D060',
-        fillOpacity: 0.5,
-        strokeColor: '#21D060',
-        strokeOpacity: 0.5,
-        strokeWeight: 2,
-        center: position,
-        clickable: false,
-      })
-
-      // set marker on click event
-      await setOnMarkerClick(google, map, pin, marker, circle)
+      pin.id = id
+      createMapElements(map, pin)
     } else {
       playbackCheck(position)
     }
   })
+}
+
+async function createMapElements(map: any, pin: any) {
+  const position = new google.maps.LatLng(pin.lat, pin.lng)
+
+  // create marker in google map
+  const marker = new google.maps.Marker({
+    map: map,
+    position: position,
+    title: pin.name,
+    icon: {
+      url: '/pin.png',
+      scaledSize: new google.maps.Size(50, 50),
+    },
+  })
+  marker.id = pin.id
+
+  // create radius indicator in google map
+  const circle = new google.maps.Circle({
+    map: map,
+    radius: pin.radius,
+    fillColor: '#21D060',
+    fillOpacity: 0.5,
+    strokeColor: '#21D060',
+    strokeOpacity: 0.5,
+    strokeWeight: 2,
+    center: position,
+    clickable: false,
+  })
+
+  // set marker on click event
+  await setOnMarkerClick(google, map, pin, marker, circle)
 }
 
 /**
@@ -299,9 +318,10 @@ async function createInfoWindowContent(pin, marker, circle) {
       <label>Radius:</label>
       <input id="radius" type="text" value="${pin.radius}" /><br>
       <button id="save">Save</button>
+      <button id="delete">Delete</button>
     `
-  const button = div.querySelector('#save')
-  button.addEventListener('click', async function () {
+  const saveBtn = div.querySelector('#save')
+  saveBtn.addEventListener('click', async function () {
     const newName = div.querySelector('#name').value
     pin.name = newName
     const newUri = div.querySelector('#uri').value
@@ -311,7 +331,21 @@ async function createInfoWindowContent(pin, marker, circle) {
     circle.setRadius(newRadius)
     await editPin(marker.id, pin)
   })
+
+  const delBtn = div.querySelector('#delete')
+  delBtn.addEventListener('click', async function () {
+    await deletePin(pin.id)
+    deleteMapElements(marker, circle)
+  })
   return div
+}
+
+async function deleteMapElements(marker: any, circle: any) {
+  if (marker.infoWindow) {
+    marker.infoWindow.close()
+  }
+  marker.setMap(null)
+  circle.setMap(null)
 }
 
 /**
@@ -383,8 +417,6 @@ async function playPin(pin: any) {
   const data = await response.json()
   console.log(data.message)
 }
-
-
 
 /**
  * @description Starts playback context corresponding to given pin
