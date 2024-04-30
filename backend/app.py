@@ -158,12 +158,13 @@ DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
 @app.route('/createpin', methods=['POST'])
 #@check_authenticated
 def save_pin():
+    print('creating pin')
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
     pin_data = data.get('pin')  # Extract pin data from request
 
     pin_id = service.add_pin_for_user(user_id, pin_data)
-    print(pin_id)
+    print('pin_id', pin_id)
     
     if pin_id:
         return jsonify({"pin_id": pin_id}), 201  #return pin ID
@@ -205,6 +206,8 @@ def modify_pin():
     pin_id = data.get('pin_id')
     user_id = data.get('user_id')
     updated_pin = data.get('pin')
+
+    print("pin Id is: ", pin_id)
 
     success = service.update_pin(user_id, pin_id, updated_pin)
     if success:

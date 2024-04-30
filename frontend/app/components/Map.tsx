@@ -161,11 +161,13 @@ async function createPin(pin: any) {
   })
   const data = await response.json()
   const id = data.pin_id
+  console.log(data)
   return id
 }
 
 async function editPin(pin_id: any, pin: any) {
   console.log('editing pin')
+  console.log(pin_id)
   console.log(pin)
   const user_id = localStorage.getItem('user_id')
   const response = await fetch('http://127.0.0.1:5000/editpin', {
@@ -220,7 +222,7 @@ async function setOnMapClick(google: any, map: any) {
         uri: 'spotify:album:5ht7ItJgpBH7W6vJ5BqpPr',
       }
       const id = await createPin(pin)
-
+      console.log(`just create pin id is ${id}`)
       // create marker in google map
       const marker = new google.maps.Marker({
         map: map,

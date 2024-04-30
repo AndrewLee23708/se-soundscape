@@ -13,5 +13,5 @@ CREATE TABLE Pin (
     Radius DOUBLE,
     -- DateCreated DATETIME,
     URI VARCHAR(255),  
-    FOREIGN KEY (UserID) REFERENCES Users(SpotifyUserID)
+    FOREIGN KEY (User_ID) REFERENCES Users(SpotifyUserID)
 );

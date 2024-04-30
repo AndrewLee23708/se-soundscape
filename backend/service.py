@@ -71,16 +71,18 @@ def add_pin_for_user(user_id, pin_data):
 
     if not pin_id:
         return {"error": "Failed to add pin", "success": False}
+    else:
+        return pin_id
 
 
 
 ### update pins for users
 def update_pin(user_id, pin_id, pin_data):
 
-    # Data validation could go here
-    if not all([user_id, pin_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
-        return {"error": "Invalid data provided", "success": False}
-    
+    # # Data validation could go here
+    # if not all([user_id, pin_id, pin_data.get('name'), pin_data.get('lat'), pin_data.get('lng'), pin_data.get('radius'), pin_data.get('uri')]):
+    #     return {"error": "Invalid data provided", "success": False}
+    print("pin_id at service is: {}", pin_id)
     try:
         if not (-90 <= float(pin_data['lat']) <= 90) or not (-180 <= float(pin_data['lng']) <= 180):
             return {"error": "Latitude or longitude out of range", "success": False}
@@ -96,8 +98,6 @@ def update_pin(user_id, pin_id, pin_data):
     else:
     
         return {"error": "Failed to update pin", "success": False}
-
-
 
 ### delete pins
 def delete_pin(user_id, pin_id):

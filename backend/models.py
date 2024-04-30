@@ -61,6 +61,9 @@ def add_pin_in_db(user_id, pin_data):
             """
             cursor.execute(sql, (user_id, pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri']))
             connection.commit()
+
+            #debug this
+            print ("cursor.lastrowid = ", cursor.lastrowid)
             return cursor.lastrowid  #return id of pin
         
     except Exception as e:
@@ -78,12 +81,13 @@ def update_pin_in_db(user_id, pin_id, pin_data):
         with connection.cursor() as cursor:
             sql = """
             UPDATE Pin SET name = %s, latitude = %s, longitude = %s, radius = %s, uri = %s
-            WHERE pin_id = %s AND user_id = %s
+            WHERE pin_id = %s
             """
-            cursor.execute(sql, (pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri'], pin_id, user_id))
+            cursor.execute(sql, (pin_data['name'], pin_data['lat'], pin_data['lng'], pin_data['radius'], pin_data['uri'], pin_id))
             connection.commit()
             print("executed query")
             print(user_id)
+            print(pin_id)
             print(pin_data['lat'])
             print(pin_data['lng'])
             print(pin_data['radius'])
