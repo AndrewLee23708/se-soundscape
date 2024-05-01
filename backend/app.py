@@ -103,6 +103,29 @@ def playlists():
     data = response.json()
     return jsonify(data)
 
+@app.route('/song', methods=["POST"])
+def song():
+    data = request.get_json()
+    token = data.get('token')
+    url = "https://api.spotify.com/v1/me/player"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return jsonify(data)
+
+@app.route('/shuffle', methods=["POST"])
+def shuffle():
+    data = request.get_json()
+    token = data.get('token')
+    url = "https://api.spotify.com/v1/me/player/shuffle?state=true"
+    headers = {
+        'Authorization': f'Bearer {token}',
+    }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return jsonify(data)
 
 @app.route('/play', methods=["POST"])
 def play():
@@ -118,8 +141,8 @@ def play():
     data = {
         "context_uri": uri
     }
-    requests.put(url, headers=headers, json=data)
-    return jsonify({"message": f'playback {uri} started'})
+    response = requests.put(url, headers=headers, json=data)
+    return jsonify({"message": f'Playback of {uri} started successfully'})
 
 
 @app.route('/pause', methods=["POST"])
