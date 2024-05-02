@@ -49,7 +49,7 @@ export default function Map() {
 
     async function playbackCheck(position) {
       const pin = await radiusCheck(position)
-      if (pin != -1) {
+      if (pin != -1 && pin.uri != 'empty') {
         if (isPlayback) {
           return
         }
@@ -79,7 +79,7 @@ export default function Map() {
           lat: position.lat(),
           lng: position.lng(),
           radius: 1000,
-          uri: '',
+          uri: 'empty',
           id: -1,
         }
         const id = await createPin(pin)
