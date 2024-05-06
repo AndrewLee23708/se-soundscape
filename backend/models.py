@@ -64,6 +64,7 @@ def add_pin_in_db(user_id, pin_data):
 
             #debug this
             print ("cursor.lastrowid = ", cursor.lastrowid)
+            
             return cursor.lastrowid  #return id of pin
         
     except Exception as e:
