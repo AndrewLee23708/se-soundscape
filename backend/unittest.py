@@ -3,17 +3,20 @@ from service import update_pin_service
 
 #run through our business layer which catches errors and sends it to the model layer.
 
-# valid inputs for a successful update
+### Before you test, make sure you insert the following into your database
+
+# Valid inputs for a successful update
 def get_valid_inputs():
     return {
-        "pin_id": 1,  # create for test in DB
-        "scape_id": 1,  # create this for sake of test in DB
-        "location": "Test Location",
-        "latitude": 45.0,
-        "longitude": -73.0,
-        "radius": 100,
-        "priority": 1,
-        "playlist_id": 'https://open.spotify.com/album/0s1mq36MFh8jBHUPeo5vjo?si=_29pJTvoThmvSbMHFxO1GA',  
+        "user_id": 999,  # Copy and paste your user__i
+        "pin_id": 999,  # Assume this exists for the test in the DB
+        "pin_data": {
+            "name": "Test Location",
+            "lat": 45.0,
+            "lng": -73.0,
+            "radius": 100,
+            "uri": 'https://open.spotify.com/album/0s1mq36MFh8jBHUPeo5vjo?si=_29pJTvoThmvSbMHFxO1GA'
+        }
     }
 
 # Location: Empty string

@@ -1,9 +1,6 @@
 from dotenv import load_dotenv
-import base64  #encode auth_string using base64
 from requests import post
-import json
 import models
-from database import setup_db
 
 #Service layer connects app.py to models.py, does exceptional handling and apply other business rules.
 # First work with intial DB without scapes 
