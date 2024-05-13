@@ -23,15 +23,14 @@ sp_oauth = SpotifyOAuth(
     scope="streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state"
 )
 
-
+### Responsible for logging user in
+# make it return user_id info from profile by fetching user_id from user_info
 @app.route('/login', methods=["GET"])
 def login():
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url, code=302)
 
-# make it return user_id info from profile by fetching user_id from user_info
-
-
+### Callback spotify API to get user to login through spotify, fetch access code and user id
 # modified callback to save/check for user
 @app.route('/callback')
 def callback():
@@ -71,7 +70,7 @@ def callback():
         redirect(f'http://localhost:3000/map?token={access_token}&user_id={user_id}'))
     return resp
 
-
+### Authenticates User
 @app.route('/user', methods=["POST"])
 def user():
     data = request.get_json()
@@ -84,13 +83,13 @@ def user():
     data = response.json()
     return jsonify(data)
 
-
+### Recieve google key via environment
 @app.route('/googlekey', methods=["GET"])
 def googlekey():
     api_key = os.getenv("GOOGLE_API_KEY")
     return jsonify({"google_api_key": api_key})
 
-
+### Fetches Spotify playlist to return to front end
 @app.route('/playlists', methods=["POST"])
 def playlists():
     data = request.get_json()
@@ -103,6 +102,8 @@ def playlists():
     data = response.json()
     return jsonify(data)
 
+
+### Fetches Song playlist to return to front end
 @app.route('/song', methods=["POST"])
 def song():
     data = request.get_json()
@@ -115,6 +116,7 @@ def song():
     data = response.json()
     return jsonify(data)
 
+### Shuffle feature for spotify
 @app.route('/shuffle', methods=["POST"])
 def shuffle():
     data = request.get_json()
@@ -127,6 +129,7 @@ def shuffle():
     data = response.json()
     return jsonify(data)
 
+### Allows for playback Spotify API
 @app.route('/play', methods=["POST"])
 def play():
     data = request.get_json()
@@ -144,7 +147,7 @@ def play():
     response = requests.put(url, headers=headers, json=data)
     return jsonify({"message": f'Playback of {uri} started successfully'})
 
-
+### Allows for pause Spotify API
 @app.route('/pause', methods=["POST"])
 def pause():
     data = request.get_json()
