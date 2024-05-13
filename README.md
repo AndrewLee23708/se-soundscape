@@ -7,3 +7,11 @@ Mainstream audience: Spotify listeners
 Niche market: Gamers
 Goals/Functionalities:
 Add audio impression into environments and help people discover new music tastes
+
+
+
+Note: How to run program
+1. Open two terminals
+2. cd one to se-soundscape/frontend, cd one to se-soundscape/backend
+3. In frontend run: npm run dev
+4. In backend run: python -m flask run
