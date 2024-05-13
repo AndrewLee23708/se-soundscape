@@ -23,6 +23,13 @@ sp_oauth = SpotifyOAuth(
     scope="streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state"
 )
 
+##########################
+
+# Spotify Related Endpoints #
+
+##########################
+
+
 ### Responsible for logging user in
 # make it return user_id info from profile by fetching user_id from user_info
 @app.route('/login', methods=["GET"])
@@ -34,6 +41,26 @@ def login():
 # modified callback to save/check for user
 @app.route('/callback')
 def callback():
+    """
+    Handles the callback from the Spotify OAuth flow. This endpoint is hit after the user
+    authorizes with Spotify. It exchanges the authorization code received with Spotify for an
+    access token. It then fetches the Spotify user's ID and attempts to save the user in the database.
+    If successful, it redirects the user to the main application with the access token and user ID
+    included in the query parameters.
+
+    Parameters:
+    - code (str): An authorization code passed as a query parameter by Spotify.
+
+    Returns:
+    - Redirect: Redirects the user to the main map page of the application with access token
+      and user ID as query parameters if the user is successfully saved in the database, or
+      if saving fails, simply redirects without the user ID.
+    
+    Side effects:
+    - Fetches user data from Spotify.
+    - Attempts to save user information in the database.
+    - Redirects the user to a different part of the application.
+    """
     authorization_code = request.args["code"]
     auth_options = {
         'url': 'https://accounts.spotify.com/api/token',
@@ -166,24 +193,27 @@ def pause():
 
 ##########################
 
-
-'''
-
-DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
-
-
-'''
-
-# route ‘save’, POST:
-# YOU WILL RECEIVE: JSON Object: (user_id, pin JSON object)
-# Pin JSON Object: {name, lat, lng, radius, uri)
-# YOU WILL DO: store pin in backend for the user_id and generate pin id
-# YOU WILL RETURN: return generated pin id
-
-
 @app.route('/createpin', methods=['POST'])
-#@check_authenticated
 def save_pin():
+
+    """
+    Receives a JSON object containing user ID and pin data, stores the pin in the backend,
+    and generates a pin ID.
+
+    Parameters:
+    - None explicitly; reads from JSON in POST request which should include:
+        * user_id (str): The user's ID.
+        * pin (dict): The pin data including:
+            - name (str): Name of the pin.
+            - lat (float): Latitude of the pin location.
+            - lng (float): Longitude of the pin location.
+            - radius (float): Radius of the pin's area of effect.
+            - uri (str): Spotify URI linked with the pin.
+
+    Returns:
+    - JSON: Either the generated pin ID or an error message if the operation fails.
+    """
+
     print('creating pin')
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
@@ -198,15 +228,19 @@ def save_pin():
         return jsonify({"error": "Failed to save pin"}), 500
 
 
-# Route ‘fetchpins’, POST
-# YOU WILL RECEIVE: JSON Object: (user_id)
-# YOU WILL DO: retrieve pin objects for user_id from backend
-# YOU WILL RETURN: all of the user’s pin objects
-# Endpoint to fetch all pins for a user given their Spotify User ID.
-
 @app.route('/fetchpins', methods=['POST'])
-#@check_authenticated
 def fetch_user_pins():
+
+    """
+    Retrieves all pin objects for a specified user ID sent via a POST request.
+
+    Parameters:
+    - None explicitly; reads user_id from JSON in POST request.
+
+    Returns:
+    - JSON: A list of all pin objects associated with the user or an error message.
+    """
+
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
 
@@ -214,14 +248,20 @@ def fetch_user_pins():
     return jsonify(pins), 200
 
 
-# Route ‘modifypin’, POST
-# YOU WILL RECEIVE: JSON Object: (pin_id, updated pin JSON object, user_id)
-# YOU WILL DO: Update corresponding pin in database
-# YOU WILL RETURN: nothing
-
 @app.route('/editpin', methods=['POST'])
-#@check_authenticated
 def modify_pin():
+    """
+    Updates a specific pin based on the provided pin_id and user_id with new pin data.
+
+    Parameters:
+    - None explicitly; expects a JSON object in POST request containing:
+        * pin_id (int): The ID of the pin to be updated.
+        * user_id (str): The user's ID who owns the pin.
+        * pin (dict): Updated data for the pin.
+
+    Returns:
+    - JSON: Confirmation message if the update is successful or an error message if it fails.
+    """
     print('editing pin in backend')
     data = request.get_json()
     pin_id = data.get('pin_id')
@@ -237,14 +277,19 @@ def modify_pin():
         return jsonify({"error": "Failed to update pin"}), 500
 
 
-# Route ‘deletepin’, POST
-# YOU WILL RECEIVE: JSON Object: (pin_id, user_id)
-# YOU WILL DO: Delete corresponding pin in database
-# YOU WILL RETURN: nothing
-
 @app.route('/deletepin', methods=['POST'])
-#@check_authenticated
 def delete_pin():
+    """
+    Deletes a specific pin identified by pin_id and associated with the user_id.
+
+    Parameters:
+    - None explicitly; expects a JSON object in POST request containing:
+        * pin_id (int): The ID of the pin to be deleted.
+        * user_id (str): The user's ID who owns the pin.
+
+    Returns:
+    - JSON: Confirmation message if the deletion is successful or an error message if it fails.
+    """
     data = request.get_json()
     pin_id = data.get('pin_id')
     user_id = data.get('user_id')
@@ -257,5 +302,3 @@ def delete_pin():
         return jsonify({"message": "Pin deleted successfully"}), 200
     else:
         return jsonify({"error": "Failed to delete pin"}), 500
-
-

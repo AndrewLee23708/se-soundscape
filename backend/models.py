@@ -3,8 +3,6 @@ from database import setup_db
 # models will contain main CRUD functions
 # it will define all queries needed for this project
 
-#LIST OF ALL QUERY METHODS:
-
 #Check if user is in system
 #return true or false, so we can run next query if needed
 def check_user_exists_db(user_id):
