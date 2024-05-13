@@ -117,8 +117,22 @@ def googlekey():
     return jsonify({"google_api_key": api_key})
 
 ### Fetches Spotify playlist to return to front end
+# Note, all following spotify methods fetch music listening feature is self-explanatory, so pydocs will not be explained those features.
 @app.route('/playlists', methods=["POST"])
 def playlists():
+    """
+    Retrieves a list of Spotify playlists for the authenticated user using a Spotify access token.
+    This endpoint expects a POST request with a JSON payload that includes the Spotify access token.
+
+    Returns:
+    json: A JSON response containing a list of playlists from the Spotify API. The structure
+          of the returned JSON directly reflects the structure provided by the Spotify API
+          for playlists.
+
+    Raises:
+    KeyError: If 'token' is not found in the POSTed JSON.
+    requests.exceptions.RequestException: If the request to Spotify API fails.
+    """
     data = request.get_json()
     token = data.get('token')
     url = f"https://api.spotify.com/v1/me/playlists?limit=50"
