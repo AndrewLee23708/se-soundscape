@@ -16,3 +16,7 @@ How to run program
 3. In frontend run: npm run dev
 4. In backend run: python -m flask run
 
+# Documentations:
+https://docs.google.com/document/d/1AXdtSgmh5e515MXYyHxDSWa83lspwRms98aP_nDj79A/edit#heading=h.1c7soa18n0vu
+
+
