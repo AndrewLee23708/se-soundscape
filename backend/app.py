@@ -4,13 +4,10 @@ from flask_cors import CORS
 import os
 import base64
 from spotipy.oauth2 import SpotifyOAuth
-from dotenv import load_dotenv
 
 from decorators import time_check, check_authenticated
 import service
 from database import setup_db  # function for DB connections
-
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("APP_SECRET")
