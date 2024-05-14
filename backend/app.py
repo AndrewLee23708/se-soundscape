@@ -23,18 +23,44 @@ sp_oauth = SpotifyOAuth(
     scope="streaming user-read-email user-read-private user-read-playback-state user-modify-playback-state"
 )
 
+##########################
 
+# Spotify Related Endpoints #
+
+##########################
+
+
+### Responsible for logging user in
+# make it return user_id info from profile by fetching user_id from user_info
 @app.route('/login', methods=["GET"])
 def login():
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url, code=302)
 
-# make it return user_id info from profile by fetching user_id from user_info
-
-
+### Callback spotify API to get user to login through spotify, fetch access code and user id
 # modified callback to save/check for user
 @app.route('/callback')
 def callback():
+    """
+    Handles the callback from the Spotify OAuth flow. This endpoint is hit after the user
+    authorizes with Spotify. It exchanges the authorization code received with Spotify for an
+    access token. It then fetches the Spotify user's ID and attempts to save the user in the database.
+    If successful, it redirects the user to the main application with the access token and user ID
+    included in the query parameters.
+
+    Parameters:
+    - code (str): An authorization code passed as a query parameter by Spotify.
+
+    Returns:
+    - Redirect: Redirects the user to the main map page of the application with access token
+      and user ID as query parameters if the user is successfully saved in the database, or
+      if saving fails, simply redirects without the user ID.
+    
+    Side effects:
+    - Fetches user data from Spotify.
+    - Attempts to save user information in the database.
+    - Redirects the user to a different part of the application.
+    """
     authorization_code = request.args["code"]
     auth_options = {
         'url': 'https://accounts.spotify.com/api/token',
@@ -71,7 +97,7 @@ def callback():
         redirect(f'http://localhost:3000/map?token={access_token}&user_id={user_id}'))
     return resp
 
-
+### Authenticates User
 @app.route('/user', methods=["POST"])
 def user():
     data = request.get_json()
@@ -84,15 +110,29 @@ def user():
     data = response.json()
     return jsonify(data)
 
-
+### Recieve google key via environment
 @app.route('/googlekey', methods=["GET"])
 def googlekey():
     api_key = os.getenv("GOOGLE_API_KEY")
     return jsonify({"google_api_key": api_key})
 
-
+### Fetches Spotify playlist to return to front end
+# Note, all following spotify methods fetch music listening feature is self-explanatory, so pydocs will not be explained those features.
 @app.route('/playlists', methods=["POST"])
 def playlists():
+    """
+    Retrieves a list of Spotify playlists for the authenticated user using a Spotify access token.
+    This endpoint expects a POST request with a JSON payload that includes the Spotify access token.
+
+    Returns:
+    json: A JSON response containing a list of playlists from the Spotify API. The structure
+          of the returned JSON directly reflects the structure provided by the Spotify API
+          for playlists.
+
+    Raises:
+    KeyError: If 'token' is not found in the POSTed JSON.
+    requests.exceptions.RequestException: If the request to Spotify API fails.
+    """
     data = request.get_json()
     token = data.get('token')
     url = f"https://api.spotify.com/v1/me/playlists?limit=50"
@@ -103,6 +143,8 @@ def playlists():
     data = response.json()
     return jsonify(data)
 
+
+### Fetches Song playlist to return to front end
 @app.route('/song', methods=["POST"])
 def song():
     data = request.get_json()
@@ -115,6 +157,7 @@ def song():
     data = response.json()
     return jsonify(data)
 
+### Shuffle feature for spotify
 @app.route('/shuffle', methods=["POST"])
 def shuffle():
     data = request.get_json()
@@ -127,6 +170,7 @@ def shuffle():
     data = response.json()
     return jsonify(data)
 
+### Allows for playback Spotify API
 @app.route('/play', methods=["POST"])
 def play():
     data = request.get_json()
@@ -144,7 +188,7 @@ def play():
     response = requests.put(url, headers=headers, json=data)
     return jsonify({"message": f'Playback of {uri} started successfully'})
 
-
+### Allows for pause Spotify API
 @app.route('/pause', methods=["POST"])
 def pause():
     data = request.get_json()
@@ -163,24 +207,27 @@ def pause():
 
 ##########################
 
-
-'''
-
-DEMO, STRAIGHT FROM PROFILE TO LIST OF PINS
-
-
-'''
-
-# route ‘save’, POST:
-# YOU WILL RECEIVE: JSON Object: (user_id, pin JSON object)
-# Pin JSON Object: {name, lat, lng, radius, uri)
-# YOU WILL DO: store pin in backend for the user_id and generate pin id
-# YOU WILL RETURN: return generated pin id
-
-
 @app.route('/createpin', methods=['POST'])
-#@check_authenticated
 def save_pin():
+
+    """
+    Receives a JSON object containing user ID and pin data, stores the pin in the backend,
+    and generates a pin ID.
+
+    Parameters:
+    - None explicitly; reads from JSON in POST request which should include:
+        * user_id (str): The user's ID.
+        * pin (dict): The pin data including:
+            - name (str): Name of the pin.
+            - lat (float): Latitude of the pin location.
+            - lng (float): Longitude of the pin location.
+            - radius (float): Radius of the pin's area of effect.
+            - uri (str): Spotify URI linked with the pin.
+
+    Returns:
+    - JSON: Either the generated pin ID or an error message if the operation fails.
+    """
+
     print('creating pin')
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
@@ -195,15 +242,19 @@ def save_pin():
         return jsonify({"error": "Failed to save pin"}), 500
 
 
-# Route ‘fetchpins’, POST
-# YOU WILL RECEIVE: JSON Object: (user_id)
-# YOU WILL DO: retrieve pin objects for user_id from backend
-# YOU WILL RETURN: all of the user’s pin objects
-# Endpoint to fetch all pins for a user given their Spotify User ID.
-
 @app.route('/fetchpins', methods=['POST'])
-#@check_authenticated
 def fetch_user_pins():
+
+    """
+    Retrieves all pin objects for a specified user ID sent via a POST request.
+
+    Parameters:
+    - None explicitly; reads user_id from JSON in POST request.
+
+    Returns:
+    - JSON: A list of all pin objects associated with the user or an error message.
+    """
+
     data = request.get_json()  # Get data from POST request
     user_id = data.get('user_id')  # Extract user_id from data
 
@@ -211,14 +262,20 @@ def fetch_user_pins():
     return jsonify(pins), 200
 
 
-# Route ‘modifypin’, POST
-# YOU WILL RECEIVE: JSON Object: (pin_id, updated pin JSON object, user_id)
-# YOU WILL DO: Update corresponding pin in database
-# YOU WILL RETURN: nothing
-
 @app.route('/editpin', methods=['POST'])
-#@check_authenticated
 def modify_pin():
+    """
+    Updates a specific pin based on the provided pin_id and user_id with new pin data.
+
+    Parameters:
+    - None explicitly; expects a JSON object in POST request containing:
+        * pin_id (int): The ID of the pin to be updated.
+        * user_id (str): The user's ID who owns the pin.
+        * pin (dict): Updated data for the pin.
+
+    Returns:
+    - JSON: Confirmation message if the update is successful or an error message if it fails.
+    """
     print('editing pin in backend')
     data = request.get_json()
     pin_id = data.get('pin_id')
@@ -234,14 +291,19 @@ def modify_pin():
         return jsonify({"error": "Failed to update pin"}), 500
 
 
-# Route ‘deletepin’, POST
-# YOU WILL RECEIVE: JSON Object: (pin_id, user_id)
-# YOU WILL DO: Delete corresponding pin in database
-# YOU WILL RETURN: nothing
-
 @app.route('/deletepin', methods=['POST'])
-#@check_authenticated
 def delete_pin():
+    """
+    Deletes a specific pin identified by pin_id and associated with the user_id.
+
+    Parameters:
+    - None explicitly; expects a JSON object in POST request containing:
+        * pin_id (int): The ID of the pin to be deleted.
+        * user_id (str): The user's ID who owns the pin.
+
+    Returns:
+    - JSON: Confirmation message if the deletion is successful or an error message if it fails.
+    """
     data = request.get_json()
     pin_id = data.get('pin_id')
     user_id = data.get('user_id')
@@ -254,151 +316,3 @@ def delete_pin():
         return jsonify({"message": "Pin deleted successfully"}), 200
     else:
         return jsonify({"error": "Failed to delete pin"}), 500
-
-
-'''
-
-SCAPES, STRAIGHT FROM PROFILE TO LIST OF PINS
-For future implementation
-
-
-'''
-
-
-# users would have access to all profiles and shared profiles
-# **note: profile are users, scapes are different maps they have
-# ***note: front end can declare which endpoint method you want to call
-# all operations to first menu where users can select their profiles
-
-# @app.route('/scapes/<int:profile_id>', methods=['GET', 'POST', 'DELETE'])
-# def scape_operations(profile_id):
-
-#     # Update the profile with the provided ID
-#     if request.method == 'GET':
-#         scape_details = service.service_get_all_scapes_for_user(profile_id)
-#         return jsonify(scape_details), 200
-
-#     elif request.method == 'POST':
-#         # Create a new profile
-#         data = request.get_json()
-#         return jsonify(service.service_add_new_scape(profile_id, data)), 201
-
-#     elif request.method == 'DELETE':
-#         # Delete the profile with the provided ID
-#         return jsonify(service.service_delete_scape_service(profile_id)), 204
-
-#     else:
-#         return jsonify({"error": "Method not allowed"}), 405
-
-
-# # Once user selects a scape, we return all available scapes
-# @app.route('/scapes/<int:scape_id>/pins', methods=['GET'])
-# def get_pins_for_scape(scape_id):
-#     # Retrieve and return all pins for the given scape
-#     pins = service.get_pins_by_scape_service(scape_id)  # Service that handles the business logic for getting pins
-#     return jsonify(pins), 200
-
-
-# ##### pin operations
-
-# # take in pin id,
-# @app.route('/pins', methods=['POST', 'GET'])
-# def get_pin():
-#     data = request.get_json()
-#     id = data.get("id")
-#     pin = data.get("pin")
-
-#     service.service_get_pin_details(id)
-
-#     return jsonify()
-
-# @app.route('/pins', methods=['POST'])
-# def add_pin():
-#     data = request.get_json()
-#     return service.service_add_pin(data), 201  # HTTP 201 Created for successful resource creation
-
-# @app.route('/pins/<int:pin_id>', methods=['DELETE'])
-# def delete_pin(pin_id):
-#     return service.service_delete_pin(pin_id), 204  # HTTP 204 No Content for successful deletion without response body
-
-# @app.route('/pins/<int:pin_id>', methods=['PUT'])
-# def edit_pin(pin_id):
-#     data = request.get_json()
-#     return service.service_update_pin(pin_id, data), 200  # HTTP 200 OK for successful update
-
-# if __name__ == '__main__':
-#     app.run(debug=True)
-
-
-# ### place holder, this is already implemented in front end, but we need to find a way to send current location to server as POST rquest, and have server check against Pin locations:
-# ### Need information from Google maps API
-# @app.route('/pins/check-location', methods=['POST'])
-# def check_pin_location():
-#     data = request.get_json()
-#     user_location = data.get('location')
-
-#     # Assuming 'check_user_within_pin' is a service that returns pin data if the user is within a pin's location
-#     pin_info = check_user_within_pin_service(user_location)
-#     if pin_info:
-#         return jsonify(pin_info), 200
-#     else:
-#         return jsonify({"error": "No pins nearby"}), 404
-
-
-# implement shared feature later on
-# @app.route('/profiles/<profileId>', methods=['POST'])
-# def share_profile(profileId):
-#     data = request.get_json()
-#     return add_profile_service(profileId, data)
-
-# upon clicking a scape, we will load all the pins on the map
-
-
-# ### DB test endpoint
-# @app.route('/db-test')  # Test database connection
-# def test_db():
-#     try:
-#         connection = setup_db()
-#         cur = connection.cursor()  # All SQL is done through cursor
-
-#         # See how many users there are
-#         cur.execute("SELECT COUNT(*) FROM Users")
-#         result = cur.fetchone()  # This will be a tuple like (count,)
-#         cur.close()
-
-#         # Good practice to return JSON
-#         return jsonify({'number_of_users': result[0]})
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
-
-
-# #dynamic routing <>, URLs pass parameter and get another website
-# #pass variable name
-# @app.route('/get-user/<user_id>')
-# def get_user(user_id):
-#     user_data = {
-#         "user_id": user_id,
-#         "name": "John Doe",
-#         "email": "john.doe@gmail.com"
-#      }
-
-#     #query parameter, extra value included after main path
-#     extra = request.args.get("extra")
-#     if extra:
-#         user_data["extra"] = extra
-
-#     return jsonify(user_data), 200  #return JSON, response code. Python dictionary ->Josnify -> json
-#                                     #status code 200 of success
-
-# #POST
-# @app.route("/create-user", methods = ["POST"])
-# def create_user():
-#     data = request.get_json()
-
-#     return jsonify(data), 201   #receive json
-
-# def print_name(name):
-#     return 'Hi, {}'.format(name)       #application can generate based on name given
-
-# if __name__ == '__main__':           #main method?
-#     app.run(debug=True)

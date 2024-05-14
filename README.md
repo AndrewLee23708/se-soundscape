@@ -7,3 +7,23 @@ Mainstream audience: Spotify listeners
 Niche market: Gamers
 Goals/Functionalities:
 Add audio impression into environments and help people discover new music tastes
+
+
+How to run program
+1. Install XAMMP, name your database 'Soundscape', and use the SQL inserts 'trialSchema.sql' into the sql query
+https://www.apachefriends.org/download.html
+
+1. Open two terminals
+2. cd one to se-soundscape/frontend, cd one to se-soundscape/backend
+3. In frontend run: npm run dev
+4. In backend run: python -m flask run
+
+# Documentations:
+https://docs.google.com/document/d/1AXdtSgmh5e515MXYyHxDSWa83lspwRms98aP_nDj79A/edit#heading=h.1c7soa18n0vu
+
+# Final Slide Presentation
+Contributions are fully illustrated at the end of the slides
+https://docs.google.com/presentation/d/1qXOv22PPg1wNnkLpJiEYh0VD8wKWmj75Qi8GXqGqudg/edit#slide=id.g27118a8ab88_0_73
+
+
+
