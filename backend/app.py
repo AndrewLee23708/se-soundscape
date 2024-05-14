@@ -30,10 +30,16 @@ sp_oauth = SpotifyOAuth(
 ##########################
 
 
-### Responsible for logging user in
-# make it return user_id info from profile by fetching user_id from user_info
+### Responsible for logging user in through spotify url
+# it will return all necesaary information for user_id info from profile by fetching user_id from user_info
 @app.route('/login', methods=["GET"])
 def login():
+    """
+    Redirects to Spotify's authorization URL for user login and app authorization.
+    
+    Returns:
+    - Redirection to Spotify login URL.
+    """
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url, code=302)
 
@@ -100,6 +106,14 @@ def callback():
 ### Authenticates User
 @app.route('/user', methods=["POST"])
 def user():
+    """
+    Retrieves and returns Spotify user information using a provided access token.
+    The endpoint extracts the 'token' from the incoming JSON payload, which is then used
+    to make a request to the Spotify "Get Current User's Profile" API.
+
+    Returns:
+        A JSON response containing Spotify user profile data.
+    """
     data = request.get_json()
     token = data.get('token')
     url = "https://api.spotify.com/v1/me"
@@ -110,14 +124,22 @@ def user():
     data = response.json()
     return jsonify(data)
 
+
 ### Recieve google key via environment
 @app.route('/googlekey', methods=["GET"])
 def googlekey():
+    """
+    Provides the Google API key stored in environment variables.
+    This key is used for integrating Google services into the application.
+
+    Returns:
+        A JSON response containing the Google Maps API key.
+    """
     api_key = os.getenv("GOOGLE_API_KEY")
     return jsonify({"google_api_key": api_key})
 
+
 ### Fetches Spotify playlist to return to front end
-# Note, all following spotify methods fetch music listening feature is self-explanatory, so pydocs will not be explained those features.
 @app.route('/playlists', methods=["POST"])
 def playlists():
     """
@@ -147,6 +169,13 @@ def playlists():
 ### Fetches Song playlist to return to front end
 @app.route('/song', methods=["POST"])
 def song():
+    """
+    Fetches the current playback state and information about the currently playing track from Spotify's Web API.
+    This endpoint requires a valid Spotify access token passed via JSON payload in the 'token' field.
+
+    Returns:
+        A JSON response containing the current playback state and track information.
+    """
     data = request.get_json()
     token = data.get('token')
     url = "https://api.spotify.com/v1/me/player"
@@ -160,6 +189,13 @@ def song():
 ### Shuffle feature for spotify
 @app.route('/shuffle', methods=["POST"])
 def shuffle():
+    """
+    Toggles the shuffle mode for Spotify playback using the Spotify Web API.
+    The endpoint reads the Spotify access token from the incoming JSON payload.
+
+    Returns:
+        A JSON response confirming the change in the shuffle state.
+    """
     data = request.get_json()
     token = data.get('token')
     url = "https://api.spotify.com/v1/me/player/shuffle?state=true"
@@ -173,6 +209,13 @@ def shuffle():
 ### Allows for playback Spotify API
 @app.route('/play', methods=["POST"])
 def play():
+    """
+    Starts playback of a Spotify URI on the specified device using the Spotify Web API.
+    Receives the Spotify access token, device ID, and context URI (playlist, album, or track) through the request JSON.
+
+    Returns:
+        A JSON response indicating successful initiation of playback.
+    """
     data = request.get_json()
     token = data.get('token')
     device_id = data.get('device_id')
@@ -191,6 +234,13 @@ def play():
 ### Allows for pause Spotify API
 @app.route('/pause', methods=["POST"])
 def pause():
+    """
+    Pauses the current Spotify playback on the specified device using the Spotify Web API.
+    The endpoint uses the provided Spotify access token and device ID from the request JSON.
+
+    Returns:
+        A JSON response indicating successful pause of playback.
+    """
     data = request.get_json()
     token = data.get('token')
     device_id = data.get('device_id')
