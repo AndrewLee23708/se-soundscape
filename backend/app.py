@@ -30,10 +30,16 @@ sp_oauth = SpotifyOAuth(
 ##########################
 
 
-### Responsible for logging user in
-# make it return user_id info from profile by fetching user_id from user_info
+### Responsible for logging user in through spotify url
+# it will return all necesaary information for user_id info from profile by fetching user_id from user_info
 @app.route('/login', methods=["GET"])
 def login():
+    """
+    Redirects to Spotify's authorization URL for user login and app authorization.
+    
+    Returns:
+    - Redirection to Spotify login URL.
+    """
     auth_url = sp_oauth.get_authorize_url()
     return redirect(auth_url, code=302)
 
